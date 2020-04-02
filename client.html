@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+</head>
+
+<body>
+    <div id="app">
+        <div class="chatInterface"></div>
+        source:<input class="source" type="text" value="" />
+        <button onclick="logIn()">log in</button><br />
+        target:<input class="target" type="text" value="" /><br />
+        <input class="inputBox" type="text" value="" />
+        <button onclick="send()">send</button>
+    </div>
+</body>
+<script src="./node_modules/socket.io-client/dist/socket.io.js"></script>
+<script>
+    let socket = undefined;
+
+    function logIn() {
+        const source = document.querySelector(".source");
+        if (source.value === "") {
+            alert("source empty")
+            return;
+        }
+        socket = io('127.0.0.1:3000');
+        socket.emit('first', document.querySelector(".source").value);
+        socket.on('receive', (data) => {
+            const p = document.createElement("p");
+            p.innerText = data.source + "->" + "You" + ": " + data.content;
+            document.querySelector(".chatInterface").appendChild(p);
+        });
+        socket.on('failed', (data) => {
+            const target = document.querySelector(".target");
+            const p = document.createElement("p");
+            p.innerText = `last send failed ! ${target.value} is not log in`;
+            document.querySelector(".chatInterface").appendChild(p);
+        });
+    }
+
+    function send() {
+        if (socket === undefined) {
+            alert("haven't log in");
+            return;
+        }
+        const source = document.querySelector(".source");
+        const target = document.querySelector(".target");
+        const input = document.querySelector(".inputBox");
+        const content = input.value;
+        if (content === "") {
+            alert("content empty");
+            return;
+        }
+        socket.emit('send', { source: source.value, target: target.value, content: content });
+        const p = document.createElement("p");
+        p.innerText = "You" + "->" + target.value + ": " + content;
+        document.querySelector(".chatInterface").appendChild(p);
+        input.value = "";
+    }
+</script>
+<style>
+    #app {
+        width: 100%;
+        height: 700px;
+    }
+
+    .chatInterface {
+        width: 500px;
+        height: 80%;
+        background: rgb(110, 166, 230);
+    }
+
+    .inputBox {
+        width: 500px;
+        background: rgb(110, 166, 230);
+        border-top: 1px solid blue;
+    }
+</style>
+
+</html>
